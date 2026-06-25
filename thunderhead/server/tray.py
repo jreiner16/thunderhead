@@ -13,7 +13,7 @@ def _create_icon_image() -> Image.Image:
     draw = ImageDraw.Draw(img)
     draw.polygon(
         [(32, 2), (12, 38), (28, 38), (18, 62), (52, 24), (34, 24), (44, 2)],
-        fill=(204, 0, 0),
+        fill=(138, 180, 248),
     )
     return img
 

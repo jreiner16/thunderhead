@@ -13,11 +13,11 @@ body {
 }
 
 a { color: #c0c0c0; text-decoration: none; }
-a:hover { color: #ff1a1a; }
+a:hover { color: #8ab4f8; }
 
 ::selection {
-    background: #cc0000;
-    color: #fff;
+    background: #8ab4f8;
+    color: #0a0a0a;
 }
 
 .navbar {
@@ -44,7 +44,7 @@ a:hover { color: #ff1a1a; }
     letter-spacing: 1px;
     text-transform: uppercase;
 }
-.nav-links a:hover { color: #ff1a1a; }
+.nav-links a:hover { color: #8ab4f8; }
 
 .container {
     max-width: 1000px;
@@ -98,12 +98,12 @@ a:hover { color: #ff1a1a; }
 
 .login-card input:focus {
     outline: none;
-    border-color: #cc0000;
+    border-color: #8ab4f8;
 }
 
 .login-card button {
-    background: #cc0000;
-    color: #fff;
+    background: #8ab4f8;
+    color: #0a0a0a;
     font-weight: 600;
     border: none;
     cursor: pointer;
@@ -112,12 +112,12 @@ a:hover { color: #ff1a1a; }
     font-size: 0.8em;
 }
 
-.login-card button:hover { background: #ff1a1a; }
+.login-card button:hover { background: #5a8ad4; }
 
-.error { color: #cc0000; font-size: 0.8em; }
+.error { color: #8ab4f8; font-size: 0.8em; }
 .hidden { display: none; }
 
-.welcome { margin-bottom: 32px; border-left: 3px solid #cc0000; padding-left: 16px; }
+.welcome { margin-bottom: 32px; border-left: 3px solid #8ab4f8; padding-left: 16px; }
 .welcome h1 { font-size: 1.3em; margin-bottom: 8px; color: #e0e0e0; letter-spacing: 1px; }
 .welcome p { color: #666; font-size: 0.85em; }
 
@@ -197,21 +197,21 @@ a.card { display: block; color: inherit; text-decoration: none; }
 .btn:hover { background: #1a1a1a; }
 
 .btn-primary {
-    background: #cc0000;
-    color: #fff;
+    background: #8ab4f8;
+    color: #0a0a0a;
     border: none;
     font-weight: 600;
 }
 
-.btn-primary:hover { background: #ff1a1a; }
+.btn-primary:hover { background: #5a8ad4; }
 
 .btn-danger {
     background: none;
-    color: #cc0000;
-    border: 1px solid #cc0000;
+    color: #8ab4f8;
+    border: 1px solid #8ab4f8;
 }
 
-.btn-danger:hover { background: #cc0000; color: #fff; }
+.btn-danger:hover { background: #8ab4f8; color: #0a0a0a; }
 
 .breadcrumb {
     display: flex;
@@ -225,7 +225,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
 }
 
 .breadcrumb a { color: #666; white-space: nowrap; padding: 0 2px; }
-.breadcrumb a:hover { color: #ff1a1a; }
+.breadcrumb a:hover { color: #8ab4f8; }
 .breadcrumb a::after { content: "/"; margin-left: 4px; color: #333; }
 .breadcrumb a:last-child::after { content: ""; }
 .breadcrumb a:last-child { color: #c0c0c0; cursor: default; pointer-events: none; }
@@ -264,9 +264,9 @@ a.card { display: block; color: inherit; text-decoration: none; }
 
 .file-icon { margin-right: 8px; }
 .dir-link { cursor: pointer; color: #c0c0c0; }
-.dir-link:hover { color: #ff1a1a; }
+.dir-link:hover { color: #8ab4f8; }
 .file-link { cursor: pointer; color: #888; }
-.file-link:hover { color: #ff1a1a; }
+.file-link:hover { color: #8ab4f8; }
 
 .action-btn {
     background: none;
@@ -278,7 +278,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
     font-family: inherit;
 }
 
-.action-btn:hover { color: #cc0000; }
+.action-btn:hover { color: #8ab4f8; }
 
 .loading { text-align: center; color: #555; padding: 40px; font-size: 0.85em; }
 
@@ -295,9 +295,9 @@ a.card { display: block; color: inherit; text-decoration: none; }
 }
 
 .drop-zone.drag-over {
-    border-color: #cc0000;
-    background: rgba(204,0,0,0.05);
-    color: #cc0000;
+    border-color: #8ab4f8;
+    background: rgba(138,180,248,0.05);
+    color: #8ab4f8;
 }
 
 .upload-progress {
@@ -309,7 +309,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
 
 .progress-bar {
     height: 2px;
-    background: #cc0000;
+    background: #8ab4f8;
     width: 0%;
     margin-bottom: 8px;
     transition: width 0.3s;
@@ -357,7 +357,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
 
 .modal input:focus {
     outline: none;
-    border-color: #cc0000;
+    border-color: #8ab4f8;
 }
 
 .modal-actions {

@@ -160,16 +160,16 @@ class SetupApp(App):
         border: solid #222;
     }
     Input:focus {
-        border: solid #cc0000;
+        border: solid #8ab4f8;
     }
     Button {
-        background: #cc0000;
-        color: #fff;
+        background: #8ab4f8;
+        color: #0a0a0a;
         border: none;
         text-style: bold;
     }
     Button:hover {
-        background: #ff1a1a;
+        background: #5a8ad4;
     }
     .status {
         color: #666;

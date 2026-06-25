@@ -7,9 +7,8 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Input, Button, Label, Static, Header, Footer
-from textual.containers import Vertical, Horizontal, Container
-from textual.binding import Binding
+from textual.widgets import Input, Button, Label, Static
+from textual.containers import Container
 from textual import events
 
 from thunderhead.client.api import ThunderheadClient
@@ -43,7 +42,7 @@ def icon_for(name: str) -> str:
 class ConnectScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Container(
-            Static("\u26a1 Thunderhead Client", classes="client-title"),
+            Static("Thunderhead Client", classes="client-title"),
             Static("Connect to your personal VPS", classes="client-subtitle"),
             Static("", classes="spacer"),
             Label("Server Address", classes="field-label"),
@@ -60,7 +59,7 @@ class ConnectScreen(Screen):
                 classes="field",
             ),
             Static("", classes="spacer"),
-            Button("\U0001f517  Connect", id="connect", variant="primary"),
+            Button("Connect", id="connect", variant="primary"),
             Static("", id="status", classes="client-status"),
             classes="connect-form",
         )
@@ -97,23 +96,17 @@ class ConnectScreen(Screen):
 
 
 class BrowserScreen(Screen):
-    BINDINGS = [
-        Binding("q", "quit_app", "Quit"),
-    ]
-
     def __init__(self):
         super().__init__()
         self.current_path = "/"
         self.items: list[dict] = []
         self.cursor_index = 0
-        self.command_text = ""
-        self.in_cmd_mode = False
 
     def compose(self) -> ComposeResult:
         yield Container(
             Static("", id="header-bar", classes="browser-header"),
             Static("", id="file-list", classes="file-list"),
-            Static("", id="command-bar", classes="command-bar"),
+            Static("", id="footer-bar", classes="footer-bar"),
             classes="browser-layout",
         )
 
@@ -122,7 +115,7 @@ class BrowserScreen(Screen):
 
     async def _refresh(self):
         header = self.query_one("#header-bar", Static)
-        header.update(f"\u26a1 {self.app.address_label} \u2014 {self.current_path}")
+        header.update(f"  {self.app.address_label}  |  {self.current_path}")
 
         items = await self.app.client.list_files(self.current_path)
         if items is None:
@@ -139,30 +132,24 @@ class BrowserScreen(Screen):
         has_parent = self.current_path != "/"
 
         if has_parent:
-            marker = "\u25b8" if self.cursor_index == 0 else " "
-            lines.append(f"  {marker} \U0001f4c1  ..")
+            marker = ">" if self.cursor_index == 0 else " "
+            lines.append(f"  {marker}  [..]")
 
         for i, item in enumerate(self.items):
             idx = i + (1 if has_parent else 0)
-            icon = "\U0001f4c1" if item["is_dir"] else icon_for(item["name"])
+            icon = "[D]" if item["is_dir"] else "[F]"
             size = "-" if item["is_dir"] else format_size(item["size"])
             date = format_date(item["modified"])
-            marker = "\u25b8" if idx == self.cursor_index else " "
+            marker = ">" if idx == self.cursor_index else " "
             name = item["name"]
             if len(name) > 28:
                 name = name[:25] + "..."
             lines.append(f"  {marker} {icon}  {name:<28} {size:>8}  {date}")
 
         widget.update("\n".join(lines))
-        self._update_command_bar()
-
-    def _update_command_bar(self):
-        cmd = self.query_one("#command-bar", Static)
-        bar = ":" if self.in_cmd_mode else ""
-        cmd.update(f"  {bar}{self.command_text}")
 
     def _show_error(self, msg: str):
-        self.query_one("#file-list", Static).update(f"\n  \u274c {msg}")
+        self.query_one("#file-list", Static).update(f"\n  [!] {msg}")
 
     async def _go_up(self):
         if self.current_path != "/":
@@ -185,124 +172,26 @@ class BrowserScreen(Screen):
                 self.cursor_index = 0
                 await self._refresh()
 
-    async def _execute_command(self):
-        text = self.command_text.strip()
-        self.command_text = ""
-        self.in_cmd_mode = False
-        self._update_command_bar()
-
-        if not text:
-            return
-
-        cmd_parts = text.split(maxsplit=1)
-        cmd = cmd_parts[0].lower()
-        arg = cmd_parts[1] if len(cmd_parts) > 1 else ""
-
-        if cmd == "q" or cmd == "quit":
-            self.app.exit()
-
-        elif cmd == "cd":
-            if not arg:
-                return
-            if arg.startswith("/"):
-                new_path = arg
-            elif arg == "..":
-                new_path = self.current_path.rstrip("/").rsplit("/", 1)[0] or "/"
-            else:
-                new_path = self.current_path.rstrip("/") + "/" + arg
-            self.current_path = new_path
-            self.cursor_index = 0
-            await self._refresh()
-
-        elif cmd == "mkdir":
-            if arg:
-                path = self.current_path.rstrip("/") + "/" + arg
-                ok = await self.app.client.mkdir(path)
-                if ok:
-                    await self._refresh()
-
-        elif cmd == "rm":
-            if arg:
-                path = self.current_path.rstrip("/") + "/" + arg
-                ok = await self.app.client.remove(path)
-                if ok:
-                    await self._refresh()
-
-        elif cmd == "upload":
-            if arg:
-                p = Path(arg)
-                if p.is_file():
-                    content = p.read_bytes()
-                    ok = await self.app.client.upload(self.current_path, p.name, content)
-                    if ok:
-                        await self._refresh()
-
-        elif cmd == "download":
-            if arg:
-                data = await self.app.client.download(
-                    self.current_path.rstrip("/") + "/" + arg
-                )
-                if data:
-                    Path.cwd().joinpath(arg).write_bytes(data)
-
-        elif cmd == "refresh" or cmd == "r":
-            await self._refresh()
-
-        elif cmd == "help":
-            help_txt = (
-                "\n  Commands (type : then command, press Enter):\n"
-                "  cd <path>        Change directory\n"
-                "  mkdir <name>     Create folder\n"
-                "  rm <name>        Delete file or folder\n"
-                "  upload <file>    Upload file from laptop\n"
-                "  download <file>  Download file to laptop\n"
-                "  refresh / r      Refresh file list\n"
-                "  q / quit         Disconnect\n"
-                "  help             Show this help\n"
-                "\n  Keys: \u2191\u2193 navigate  Enter open  \u232b up  : commands  / search  Esc cancel\n"
-            )
-            self.query_one("#file-list", Static).update(help_txt)
+    def _quit(self):
+        self.app.exit()
 
     def on_key(self, event: events.Key):
-        if self.in_cmd_mode:
-            if event.key == "escape":
-                self.in_cmd_mode = False
-                self.command_text = ""
-                self._update_command_bar()
-            elif event.key == "enter":
-                asyncio.create_task(self._execute_command())
-            elif event.key == "backspace":
-                self.command_text = self.command_text[:-1]
-                self._update_command_bar()
-            elif event.is_printable:
-                self.command_text += event.key
-                self._update_command_bar()
-        else:
-            if event.key == "up":
-                has_parent = self.current_path != "/"
-                max_idx = len(self.items) + (1 if has_parent else 0) - 1
-                self.cursor_index = max(0, self.cursor_index - 1)
-                self._render_list()
-            elif event.key == "down":
-                has_parent = self.current_path != "/"
-                max_idx = len(self.items) + (1 if has_parent else 0) - 1
-                self.cursor_index = min(max_idx, self.cursor_index + 1)
-                self._render_list()
-            elif event.key == "enter":
-                asyncio.create_task(self._activate())
-            elif event.key == "backspace":
-                asyncio.create_task(self._go_up())
-            elif event.key == ":" or event.key == "colon":
-                self.in_cmd_mode = True
-                self.command_text = ""
-                self._update_command_bar()
-            elif event.key == "/":
-                self.in_cmd_mode = True
-                self.command_text = ""
-                self._update_command_bar()
-
-    def action_quit_app(self):
-        self.app.exit()
+        if event.key == "q":
+            self._quit()
+        elif event.key == "up":
+            has_parent = self.current_path != "/"
+            max_idx = len(self.items) + (1 if has_parent else 0) - 1
+            self.cursor_index = max(0, self.cursor_index - 1)
+            self._render_list()
+        elif event.key == "down":
+            has_parent = self.current_path != "/"
+            max_idx = len(self.items) + (1 if has_parent else 0) - 1
+            self.cursor_index = min(max_idx, self.cursor_index + 1)
+            self._render_list()
+        elif event.key == "enter":
+            asyncio.create_task(self._activate())
+        elif event.key == "backspace":
+            asyncio.create_task(self._go_up())
 
 
 class ClientApp(App):
@@ -330,33 +219,32 @@ class ClientApp(App):
         border: solid #222;
     }
     Input:focus {
-        border: solid #cc0000;
+        border: solid #8ab4f8;
     }
     Button {
-        background: #cc0000;
-        color: #fff;
+        background: #8ab4f8;
+        color: #0a0a0a;
         border: none;
         text-style: bold;
     }
     Button:hover {
-        background: #ff1a1a;
+        background: #5a8ad4;
     }
     .client-status {
         color: #666;
     }
     .browser-header {
-        color: #c0c0c0;
-        text-style: bold;
-        padding: 1 2;
+        color: #8ab4f8;
+        padding: 1 0;
         background: #111;
     }
     .file-list {
         color: #c0c0c0;
-        padding: 0 1;
+        padding: 0 0;
     }
-    .command-bar {
-        color: #cc0000;
-        padding: 1 2;
+    .footer-bar {
+        color: #555;
+        padding: 1 0;
         background: #0a0a0a;
     }
     .spacer {
