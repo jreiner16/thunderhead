@@ -1,11 +1,22 @@
 import argparse
 import os
-import sys
+import socket
 
 import uvicorn
 
 from thunderhead.config import load_config, DATA_DIR
 from thunderhead.server.setup import run_setup
+
+
+def get_ip() -> str:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 
 def main():
@@ -24,17 +35,19 @@ def main():
 
     os.environ["THUNDERHEAD_CONFIG"] = os.path.join(DATA_DIR, "config.json")
 
+    ip = get_ip()
     proto = "https" if use_ssl else "http"
-    print(f"Thunderhead running at {proto}://0.0.0.0:{port}")
-    print(f"Storage: {config['storage_root']}")
-    print("---")
+    print(f"[Thunderhead] running on {proto}://{ip}:{port}")
+    print(f"[Thunderhead] storage: {config['storage_root']}")
+    print(f"[Thunderhead] press Ctrl+C to stop")
 
     ssl_kwargs = {"ssl_certfile": cert, "ssl_keyfile": key} if use_ssl else {}
     uvicorn.run(
         "thunderhead.server.app:app",
         host="0.0.0.0",
         port=port,
-        log_level="info",
+        log_level="warning",
+        access_log=False,
         **ssl_kwargs,
     )
 
