@@ -316,16 +316,12 @@ class ClientApp(App):
     .client-title {
         text-style: bold;
         color: #c0c0c0;
-        letter-spacing: 2;
-        text-style: uppercase;
     }
     .client-subtitle {
         color: #555;
     }
     .field-label {
         color: #666;
-        text-style: uppercase;
-        letter-spacing: 1;
         margin-bottom: 1;
     }
     Input {
@@ -341,7 +337,6 @@ class ClientApp(App):
         color: #fff;
         border: none;
         text-style: bold;
-        letter-spacing: 2;
     }
     Button:hover {
         background: #ff1a1a;
