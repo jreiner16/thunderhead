@@ -1,12 +1,7 @@
-from __future__ import annotations
-
+import asyncio
+import os
 import time
-
-from textual.app import App, ComposeResult
-from textual.screen import Screen
-from textual.widgets import Input, Button, Label, Static
-from textual.containers import Container
-from textual import events
+from pathlib import Path
 
 from thunderhead.client.api import ThunderheadClient
 
@@ -23,240 +18,125 @@ def format_date(ts: int) -> str:
     return time.strftime("%Y-%m-%d %H:%M", time.localtime(ts))
 
 
+async def run():
+    address = input("Server address [localhost:8443]: ").strip() or "localhost:8443"
+    password = input("Password: ").strip()
+    if not password:
+        print("Password required")
+        return
 
-class ConnectScreen(Screen):
-    def compose(self) -> ComposeResult:
-        yield Container(
-            Static("Thunderhead Client", classes="client-title"),
-            Static("Connect to your personal VPS", classes="client-subtitle"),
-            Static("", classes="spacer"),
-            Label("Server Address", classes="field-label"),
-            Input(
-                placeholder="192.168.1.42:8443",
-                id="address",
-                classes="field",
-            ),
-            Label("Password", classes="field-label"),
-            Input(
-                placeholder="Admin password",
-                password=True,
-                id="password",
-                classes="field",
-            ),
-            Static("", classes="spacer"),
-            Button("Connect", id="connect", variant="primary"),
-            Static("", id="status", classes="client-status"),
-            classes="connect-form",
-        )
+    client = ThunderheadClient(address, password)
+    print("Connecting...")
+    try:
+        ok = await client.login()
+    except Exception:
+        ok = False
+    if not ok:
+        print("Connection failed")
+        return
 
-    async def on_button_pressed(self, event: Button.Pressed):
-        await self._connect()
+    current_path = "/"
+    print("Connected. Type 'help' for commands.")
 
-    async def on_input_submitted(self, event: Input.Submitted):
-        if event.input.id == "password":
-            await self._connect()
-
-    async def _connect(self):
-        address = self.query_one("#address", Input).value.strip()
-        password = self.query_one("#password", Input).value
-        status = self.query_one("#status", Static)
-
-        if not address or not password:
-            status.update("Enter address and password")
-            return
-
-        status.update("Connecting...")
-        client = ThunderheadClient(address, password)
+    while True:
         try:
-            success = await client.login()
-        except Exception:
-            success = False
-        if success:
-            status.update("Connected! Loading files...")
-            self.app.client = client
-            self.app.address_label = address
-            self.app.push_screen("browser")
+            line = input(f"thunderhead {current_path}> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+
+        if not line:
+            continue
+
+        parts = line.split(maxsplit=1)
+        cmd = parts[0].lower()
+        arg = parts[1] if len(parts) > 1 else ""
+
+        if cmd in ("q", "quit", "exit"):
+            break
+
+        elif cmd == "help":
+            print("  ls                    List files")
+            print("  cd <path>             Change directory")
+            print("  get <file>            Download file")
+            print("  put <local_path>      Upload file")
+            print("  mkdir <name>          Create folder")
+            print("  rm <name>             Delete file/folder")
+            print("  pwd                   Show current path")
+            print("  q/quit/exit           Disconnect")
+
+        elif cmd == "pwd":
+            print(current_path)
+
+        elif cmd == "ls":
+            items = await client.list_files(current_path)
+            if items is None:
+                print("Failed to list files")
+                continue
+            if not items:
+                print("(empty)")
+            else:
+                for item in items:
+                    icon = "d" if item["is_dir"] else " "
+                    size = "-" if item["is_dir"] else format_size(item["size"])
+                    date = format_date(item["modified"])
+                    print(f"  [{icon}] {item['name']:<30} {size:>8}  {date}")
+
+        elif cmd == "cd":
+            if not arg or arg == "~":
+                current_path = "/"
+            elif arg == "..":
+                current_path = current_path.rstrip("/").rsplit("/", 1)[0] or "/"
+            elif arg.startswith("/"):
+                current_path = arg
+            else:
+                current_path = current_path.rstrip("/") + "/" + arg
+
+        elif cmd == "get":
+            if not arg:
+                print("Usage: get <filename>")
+                continue
+            path = current_path.rstrip("/") + "/" + arg
+            data = await client.download(path)
+            if data:
+                Path(arg).write_bytes(data)
+                print(f"Downloaded {arg} ({len(data)} bytes)")
+            else:
+                print("Download failed")
+
+        elif cmd == "put":
+            if not arg:
+                print("Usage: put <local_path>")
+                continue
+            p = Path(arg)
+            if not p.is_file():
+                print(f"File not found: {arg}")
+                continue
+            content = p.read_bytes()
+            ok = await client.upload(current_path, p.name, content)
+            print("Uploaded" if ok else "Upload failed")
+
+        elif cmd == "mkdir":
+            if not arg:
+                print("Usage: mkdir <name>")
+                continue
+            path = current_path.rstrip("/") + "/" + arg
+            ok = await client.mkdir(path)
+            print("Created" if ok else "Failed")
+
+        elif cmd == "rm":
+            if not arg:
+                print("Usage: rm <name>")
+                continue
+            path = current_path.rstrip("/") + "/" + arg
+            ok = await client.remove(path)
+            print("Removed" if ok else "Failed")
+
         else:
-            status.update("Connection failed - check address and password")
+            print(f"Unknown command: {cmd}")
 
-
-class BrowserScreen(Screen):
-    def __init__(self):
-        super().__init__()
-        self.current_path = "/"
-        self.items: list[dict] = []
-        self.cursor_index = 0
-
-    def compose(self) -> ComposeResult:
-        yield Container(
-            Static("", id="header-bar", classes="browser-header"),
-            Static("", id="file-list", classes="file-list"),
-            Static("", id="footer-bar", classes="footer-bar"),
-            classes="browser-layout",
-        )
-
-    def on_mount(self):
-        self.app.call_later(self._refresh)
-
-    async def _refresh(self):
-        header = self.query_one("#header-bar", Static)
-        header.update(f"  {self.app.address_label}  |  {self.current_path}")
-
-        items = await self.app.client.list_files(self.current_path)
-        if items is None:
-            self._show_error("Connection lost")
-            return
-
-        self.items = items
-        self.cursor_index = 0
-        self._render_list()
-
-    def _render_list(self):
-        widget = self.query_one("#file-list", Static)
-        lines = [""]
-        has_parent = self.current_path != "/"
-
-        if has_parent:
-            marker = ">" if self.cursor_index == 0 else " "
-            lines.append(f"  {marker}  [..]")
-
-        for i, item in enumerate(self.items):
-            idx = i + (1 if has_parent else 0)
-            icon = "[D]" if item["is_dir"] else "[F]"
-            size = "-" if item["is_dir"] else format_size(item["size"])
-            date = format_date(item["modified"])
-            marker = ">" if idx == self.cursor_index else " "
-            name = item["name"]
-            if len(name) > 28:
-                name = name[:25] + "..."
-            lines.append(f"  {marker} {icon}  {name:<28} {size:>8}  {date}")
-
-        widget.update("\n".join(lines))
-
-    def _show_error(self, msg: str):
-        self.query_one("#file-list", Static).update(f"\n  [!] {msg}")
-
-    async def _go_up(self):
-        if self.current_path != "/":
-            self.current_path = self.current_path.rstrip("/").rsplit("/", 1)[0] or "/"
-            self.cursor_index = 0
-            await self._refresh()
-
-    async def _activate(self):
-        has_parent = self.current_path != "/"
-        idx = self.cursor_index - (1 if has_parent else 0)
-
-        if has_parent and self.cursor_index == 0:
-            await self._go_up()
-            return
-
-        if 0 <= idx < len(self.items):
-            item = self.items[idx]
-            if item["is_dir"]:
-                self.current_path = item["path"]
-                self.cursor_index = 0
-                await self._refresh()
-
-    def _quit(self):
-        self.app.exit()
-
-    def on_key(self, event: events.Key):
-        if event.key == "up":
-            has_parent = self.current_path != "/"
-            max_idx = len(self.items) + (1 if has_parent else 0) - 1
-            self.cursor_index = max(0, self.cursor_index - 1)
-            self._render_list()
-        elif event.key == "down":
-            has_parent = self.current_path != "/"
-            max_idx = len(self.items) + (1 if has_parent else 0) - 1
-            self.cursor_index = min(max_idx, self.cursor_index + 1)
-            self._render_list()
-        elif event.key == "enter":
-            self.app.call_later(self._activate)
-        elif event.key == "backspace":
-            self.app.call_later(self._go_up)
-        elif event.key == "escape":
-            self._quit()
-
-
-class ClientApp(App):
-    CSS = """
-    Screen {
-        background: #0a0a0a;
-    }
-    Static, Label {
-        color: #c0c0c0;
-    }
-    .client-title {
-        text-style: bold;
-        color: #c0c0c0;
-    }
-    .client-subtitle {
-        color: #555;
-    }
-    .field-label {
-        color: #666;
-        margin-bottom: 1;
-    }
-    Input {
-        background: #0a0a0a;
-        color: #c0c0c0;
-        border: solid #222;
-    }
-    Input:focus {
-        border: solid #8ab4f8;
-    }
-    Button {
-        background: #8ab4f8;
-        color: #0a0a0a;
-        border: none;
-        text-style: bold;
-    }
-    Button:hover {
-        background: #5a8ad4;
-    }
-    .client-status {
-        color: #666;
-    }
-    .browser-header {
-        color: #8ab4f8;
-        padding: 1 0;
-        background: #111;
-    }
-    .file-list {
-        color: #c0c0c0;
-        padding: 0 0;
-    }
-    .footer-bar {
-        color: #555;
-        padding: 1 0;
-        background: #0a0a0a;
-    }
-    .spacer {
-        height: 1;
-    }
-    .connect-form {
-        align: center middle;
-    }
-    .browser-layout {
-        layout: vertical;
-    }
-    """
-
-    SCREENS = {
-        "connect": ConnectScreen,
-        "browser": BrowserScreen,
-    }
-
-    def __init__(self):
-        super().__init__()
-        self.client: ThunderheadClient | None = None
-        self.address_label: str = ""
-
-    def on_mount(self):
-        self.push_screen("connect")
+    await client.close()
 
 
 def run_client():
-    app = ClientApp()
-    app.run()
+    asyncio.run(run())
