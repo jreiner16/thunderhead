@@ -93,6 +93,7 @@ class SetupScreen(Screen):
             NoEncryption,
         )
         import datetime
+        import ipaddress
 
         os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -124,7 +125,7 @@ class SetupScreen(Screen):
             )
             .add_extension(
                 x509.SubjectAlternativeName(
-                    [x509.DNSName("localhost"), x509.IPAddress(x509.IPAddress("127.0.0.1"))]
+                    [x509.DNSName("localhost"), x509.IPAddress(ipaddress.IPv4Address("127.0.0.1"))]
                 ),
                 critical=False,
             )
