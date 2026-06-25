@@ -115,7 +115,7 @@ a:hover { color: #8ab4f8; }
 .login-card button:hover { background: #5a8ad4; }
 
 .error { color: #8ab4f8; font-size: 0.8em; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 .welcome { margin-bottom: 32px; border-left: 3px solid #8ab4f8; padding-left: 16px; }
 .welcome h1 { font-size: 1.3em; margin-bottom: 8px; color: #e0e0e0; letter-spacing: 1px; }
