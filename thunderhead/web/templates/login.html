@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thunderhead - Login</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <h1>⚡ Thunderhead</h1>
+        <p class="subtitle">Personal VPS</p>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Admin Password" required autofocus>
+            <p id="login-error" class="error hidden">Invalid password</p>
+            <button type="submit">Connect</button>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const password = document.getElementById("password").value;
+    const error = document.getElementById("login-error");
+
+    const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+    });
+
+    if (res.ok) {
+        const data = await res.json();
+        sessionStorage.setItem("token", data.token);
+        window.location.href = "/";
+    } else {
+        error.classList.remove("hidden");
+        document.getElementById("password").value = "";
+        document.getElementById("password").focus();
+    }
+});
+</script>
+</body>
+</html>

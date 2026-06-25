@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+jinja2
+aiofiles
+pystray>=0.19.5
+Pillow
+textual
+cryptography
+httpx
+python-multipart

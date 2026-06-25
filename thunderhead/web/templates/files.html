@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="files-page">
+    <div class="files-header">
+        <h2>📁 File Manager</h2>
+        <div class="files-actions">
+            <button id="new-folder-btn" class="btn">+ New Folder</button>
+            <label class="btn btn-primary" id="upload-btn">
+                Upload Files
+                <input type="file" id="file-input" multiple hidden>
+            </label>
+        </div>
+    </div>
+
+    <div id="drop-zone" class="drop-zone hidden">Drop files here</div>
+
+    <nav class="breadcrumb" id="breadcrumb">
+        <a data-path="/">/</a>
+    </nav>
+
+    <table class="file-table" id="file-table">
+        <thead>
+            <tr>
+                <th class="col-name">Name</th>
+                <th class="col-size">Size</th>
+                <th class="col-date">Modified</th>
+                <th class="col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="file-list">
+            <tr><td colspan="4" class="loading">Loading...</td></tr>
+        </tbody>
+    </table>
+
+    <div id="upload-progress" class="upload-progress hidden">
+        <div class="progress-bar" id="progress-bar"></div>
+        <span id="progress-text">Uploading...</span>
+    </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal" id="modal">
+        <h3 id="modal-title">Modal</h3>
+        <div id="modal-body"></div>
+        <div class="modal-actions">
+            <button id="modal-cancel" class="btn">Cancel</button>
+            <button id="modal-confirm" class="btn btn-danger">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

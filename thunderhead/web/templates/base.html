@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thunderhead</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">⚡ Thunderhead</div>
+    <div class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/files">Files</a>
+    </div>
+</nav>
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+<script src="/static/js/files.js"></script>
+</body>
+</html>
