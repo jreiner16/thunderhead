@@ -239,11 +239,6 @@
         if (cb) cb();
     }
 
-    document.getElementById("modal-overlay").addEventListener("click", (e) => {
-        if (e.target.id === "modal-confirm") doModalConfirm();
-        else if (e.target.id === "modal-cancel" || e.target.id === "modal-overlay") closeModal();
-    });
-
     function showConfirm(title, message, onConfirm) {
         showModal(title, `<p>${message}</p>`, onConfirm);
     }
@@ -256,6 +251,13 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        const overlay = document.getElementById("modal-overlay");
+        if (overlay) {
+            overlay.addEventListener("click", (e) => {
+                if (e.target.id === "modal-confirm") doModalConfirm();
+                else if (e.target.id === "modal-cancel" || e.target.id === "modal-overlay") closeModal();
+            });
+        }
         const fileList = document.getElementById("file-list");
         if (!fileList) return;
 

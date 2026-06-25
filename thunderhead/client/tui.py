@@ -84,7 +84,10 @@ class ConnectScreen(Screen):
         self.app.client = ThunderheadClient(address, password)
 
         async def do_connect():
-            success = await self.app.client.login()
+            try:
+                success = await self.app.client.login()
+            except Exception:
+                success = False
             if success:
                 status.update("Connected! Loading files...")
                 self.app.address_label = address
