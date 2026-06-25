@@ -209,66 +209,50 @@
         xhr.send(formData);
     }
 
-    function showConfirm(title, message, onConfirm) {
-        const overlay = document.getElementById("modal-overlay");
+    let modalCallback = null;
+
+    function closeModal() {
+        document.getElementById("modal-overlay").classList.add("hidden");
+        document.getElementById("modal-confirm").textContent = "Confirm";
+        modalCallback = null;
+    }
+
+    function showModal(title, bodyHtml, onConfirm) {
         document.getElementById("modal-title").textContent = title;
-        const body = document.getElementById("modal-body");
-        body.innerHTML = `<p>${message}</p>`;
-        overlay.classList.remove("hidden");
+        document.getElementById("modal-body").innerHTML = bodyHtml;
+        document.getElementById("modal-overlay").classList.remove("hidden");
+        modalCallback = onConfirm;
 
-        const confirmBtn = document.getElementById("modal-confirm");
-        const cancelBtn = document.getElementById("modal-cancel");
+        const input = document.querySelector("#modal-body input");
+        if (input) {
+            setTimeout(() => input.focus(), 100);
+            input.onkeydown = (e) => {
+                if (e.key === "Enter") { e.preventDefault(); doModalConfirm(); }
+                if (e.key === "Escape") closeModal();
+            };
+        }
+    }
 
-        const cleanup = () => {
-            overlay.classList.add("hidden");
-            confirmBtn.removeEventListener("click", handleConfirm);
-            cancelBtn.removeEventListener("click", cleanup);
-        };
+    function doModalConfirm() {
+        const cb = modalCallback;
+        closeModal();
+        if (cb) cb();
+    }
 
-        const handleConfirm = () => {
-            cleanup();
-            onConfirm();
-        };
+    document.getElementById("modal-overlay").addEventListener("click", (e) => {
+        if (e.target.id === "modal-confirm") doModalConfirm();
+        else if (e.target.id === "modal-cancel" || e.target.id === "modal-overlay") closeModal();
+    });
 
-        confirmBtn.addEventListener("click", handleConfirm);
-        cancelBtn.addEventListener("click", cleanup);
+    function showConfirm(title, message, onConfirm) {
+        showModal(title, `<p>${message}</p>`, onConfirm);
     }
 
     function showFolderPrompt() {
-        const overlay = document.getElementById("modal-overlay");
-        document.getElementById("modal-title").textContent = "New Folder";
-        const body = document.getElementById("modal-body");
-        body.innerHTML = `<input type="text" id="folder-name" placeholder="Folder name" autofocus>`;
-        overlay.classList.remove("hidden");
-
-        const confirmBtn = document.getElementById("modal-confirm");
-        const cancelBtn = document.getElementById("modal-cancel");
-        confirmBtn.textContent = "Create";
-
-        const cleanup = () => {
-            overlay.classList.add("hidden");
-            confirmBtn.removeEventListener("click", handleCreate);
-            cancelBtn.removeEventListener("click", cleanup);
-            confirmBtn.textContent = "Confirm";
-        };
-
-        const handleCreate = () => {
+        showModal("New Folder", '<input type="text" id="folder-name" placeholder="Folder name">', () => {
             const name = document.getElementById("folder-name")?.value;
-            if (name) {
-                newFolder(name);
-            }
-            cleanup();
-        };
-
-        const input = document.getElementById("folder-name");
-        input?.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") handleCreate();
-            if (e.key === "Escape") cleanup();
+            if (name) newFolder(name);
         });
-
-        setTimeout(() => input?.focus(), 100);
-        confirmBtn.addEventListener("click", handleCreate);
-        cancelBtn.addEventListener("click", cleanup);
     }
 
     document.addEventListener("DOMContentLoaded", () => {

@@ -4,12 +4,12 @@ import httpx
 
 
 class ThunderheadClient:
-    def __init__(self, address: str, password: str):
+    def __init__(self, address: str, password: str, verify: bool = False):
         base = f"https://{address}" if not address.startswith("http") else address
         self.base = base.rstrip("/")
         self.password = password
         self.token: str | None = None
-        self._client = httpx.AsyncClient(verify=False, timeout=30)
+        self._client = httpx.AsyncClient(verify=verify, timeout=30)
 
     async def login(self) -> bool:
         try:

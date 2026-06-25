@@ -13,14 +13,15 @@ def _create_icon_image() -> Image.Image:
     draw = ImageDraw.Draw(img)
     draw.polygon(
         [(32, 2), (12, 38), (28, 38), (18, 62), (52, 24), (34, 24), (44, 2)],
-        fill=(255, 215, 0),
+        fill=(204, 0, 0),
     )
     return img
 
 
-def run_tray(config: dict, server_proc: subprocess.Popen):
+def run_tray(config: dict, server_proc: subprocess.Popen, use_ssl: bool = True):
     port = config.get("port", 8443)
-    url = f"https://localhost:{port}"
+    proto = "https" if use_ssl else "http"
+    url = f"{proto}://localhost:{port}"
 
     def on_open(_icon, _item):
         webbrowser.open(url)
