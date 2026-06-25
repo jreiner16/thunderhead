@@ -1,39 +1,11 @@
 import argparse
 import os
 import sys
-import subprocess
-import webbrowser
+
+import uvicorn
 
 from thunderhead.config import load_config, DATA_DIR
 from thunderhead.server.setup import run_setup
-from thunderhead.server.tray import run_tray
-
-
-def start_server(config: dict, no_ssl: bool = False) -> subprocess.Popen:
-    port = config["port"]
-    cert = os.path.join(DATA_DIR, "cert.pem")
-    key = os.path.join(DATA_DIR, "key.pem")
-
-    env = os.environ.copy()
-    env["THUNDERHEAD_CONFIG"] = os.path.join(DATA_DIR, "config.json")
-
-    use_ssl = not no_ssl and os.path.exists(cert) and os.path.exists(key)
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "thunderhead.server.app:app",
-        "--host", "0.0.0.0",
-        "--port", str(port),
-        "--log-level", "info",
-    ]
-
-    if use_ssl:
-        cmd += ["--ssl-certfile", cert, "--ssl-keyfile", key]
-
-    proc = subprocess.Popen(cmd, env=env)
-    return proc, use_ssl
 
 
 def main():
@@ -45,15 +17,26 @@ def main():
     if not config or not config.get("configured"):
         config = run_setup()
 
-    proc, use_ssl = start_server(config, no_ssl=args.no_ssl)
+    port = config["port"]
+    cert = os.path.join(DATA_DIR, "cert.pem")
+    key = os.path.join(DATA_DIR, "key.pem")
+    use_ssl = not args.no_ssl and os.path.exists(cert) and os.path.exists(key)
+
+    os.environ["THUNDERHEAD_CONFIG"] = os.path.join(DATA_DIR, "config.json")
+
     proto = "https" if use_ssl else "http"
-    print(f"  Thunderhead running at {proto}://localhost:{config['port']}")
-    print(f"  VPS Storage: {config['storage_root']}")
-    print("  Check the system tray for controls")
+    print(f"Thunderhead running at {proto}://0.0.0.0:{port}")
+    print(f"Storage: {config['storage_root']}")
+    print("---")
 
-    webbrowser.open(f"{proto}://localhost:{config['port']}")
-
-    run_tray(config, proc, use_ssl=use_ssl)
+    ssl_kwargs = {"ssl_certfile": cert, "ssl_keyfile": key} if use_ssl else {}
+    uvicorn.run(
+        "thunderhead.server.app:app",
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+        **ssl_kwargs,
+    )
 
 
 if __name__ == "__main__":

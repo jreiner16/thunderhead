@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-import os
 import time
-from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.screen import Screen
@@ -25,18 +22,6 @@ def format_size(bytes: int) -> str:
 def format_date(ts: int) -> str:
     return time.strftime("%Y-%m-%d %H:%M", time.localtime(ts))
 
-
-def icon_for(name: str) -> str:
-    ext = name.split(".")[-1].lower() if "." in name else ""
-    icons = {
-        "txt": "\U0001f4c4", "md": "\U0001f4c4", "json": "\U0001f4c4",
-        "py": "\U0001f40d", "js": "\U0001f4dc", "ts": "\U0001f4dc",
-        "html": "\U0001f310", "css": "\U0001f3a8",
-        "jpg": "\U0001f5bc", "png": "\U0001f5bc", "gif": "\U0001f5bc",
-        "zip": "\U0001f4e6", "tar": "\U0001f4e6", "gz": "\U0001f4e6",
-        "pdf": "\U0001f4d5",
-    }
-    return icons.get(ext, "\U0001f4c4")
 
 
 class ConnectScreen(Screen):
@@ -64,14 +49,14 @@ class ConnectScreen(Screen):
             classes="connect-form",
         )
 
-    def on_button_pressed(self, event: Button.Pressed):
-        self._connect()
+    async def on_button_pressed(self, event: Button.Pressed):
+        await self._connect()
 
-    def on_input_submitted(self, event: Input.Submitted):
+    async def on_input_submitted(self, event: Input.Submitted):
         if event.input.id == "password":
-            self._connect()
+            await self._connect()
 
-    def _connect(self):
+    async def _connect(self):
         address = self.query_one("#address", Input).value.strip()
         password = self.query_one("#password", Input).value
         status = self.query_one("#status", Static)
@@ -81,21 +66,18 @@ class ConnectScreen(Screen):
             return
 
         status.update("Connecting...")
-        self.app.client = ThunderheadClient(address, password)
-
-        async def do_connect():
-            try:
-                success = await self.app.client.login()
-            except Exception:
-                success = False
-            if success:
-                status.update("Connected! Loading files...")
-                self.app.address_label = address
-                self.app.push_screen("browser")
-            else:
-                status.update("Connection failed - check address and password")
-
-        asyncio.create_task(do_connect())
+        client = ThunderheadClient(address, password)
+        try:
+            success = await client.login()
+        except Exception:
+            success = False
+        if success:
+            status.update("Connected! Loading files...")
+            self.app.client = client
+            self.app.address_label = address
+            self.app.push_screen("browser")
+        else:
+            status.update("Connection failed - check address and password")
 
 
 class BrowserScreen(Screen):
@@ -114,7 +96,7 @@ class BrowserScreen(Screen):
         )
 
     def on_mount(self):
-        self._refresh()
+        self.app.call_later(self._refresh)
 
     async def _refresh(self):
         header = self.query_one("#header-bar", Static)
@@ -179,9 +161,7 @@ class BrowserScreen(Screen):
         self.app.exit()
 
     def on_key(self, event: events.Key):
-        if event.key == "q":
-            self._quit()
-        elif event.key == "up":
+        if event.key == "up":
             has_parent = self.current_path != "/"
             max_idx = len(self.items) + (1 if has_parent else 0) - 1
             self.cursor_index = max(0, self.cursor_index - 1)
@@ -192,9 +172,11 @@ class BrowserScreen(Screen):
             self.cursor_index = min(max_idx, self.cursor_index + 1)
             self._render_list()
         elif event.key == "enter":
-            asyncio.create_task(self._activate())
+            self.app.call_later(self._activate)
         elif event.key == "backspace":
-            asyncio.create_task(self._go_up())
+            self.app.call_later(self._go_up)
+        elif event.key == "escape":
+            self._quit()
 
 
 class ClientApp(App):
