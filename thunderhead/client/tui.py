@@ -306,6 +306,75 @@ class BrowserScreen(Screen):
 
 
 class ClientApp(App):
+    CSS = """
+    Screen {
+        background: #0a0a0a;
+    }
+    Static, Label {
+        color: #c0c0c0;
+    }
+    .client-title {
+        text-style: bold;
+        color: #c0c0c0;
+        letter-spacing: 2;
+        text-style: uppercase;
+    }
+    .client-subtitle {
+        color: #555;
+    }
+    .field-label {
+        color: #666;
+        text-style: uppercase;
+        letter-spacing: 1;
+        margin-bottom: 1;
+    }
+    Input {
+        background: #0a0a0a;
+        color: #c0c0c0;
+        border: solid #222;
+    }
+    Input:focus {
+        border: solid #cc0000;
+    }
+    Button {
+        background: #cc0000;
+        color: #fff;
+        border: none;
+        text-style: bold;
+        letter-spacing: 2;
+    }
+    Button:hover {
+        background: #ff1a1a;
+    }
+    .client-status {
+        color: #666;
+    }
+    .browser-header {
+        color: #c0c0c0;
+        text-style: bold;
+        padding: 1 2;
+        background: #111;
+    }
+    .file-list {
+        color: #c0c0c0;
+        padding: 0 1;
+    }
+    .command-bar {
+        color: #cc0000;
+        padding: 1 2;
+        background: #0a0a0a;
+    }
+    .spacer {
+        height: 1;
+    }
+    .connect-form {
+        align: center middle;
+    }
+    .browser-layout {
+        layout: vertical;
+    }
+    """
+
     SCREENS = {
         "connect": ConnectScreen,
         "browser": BrowserScreen,

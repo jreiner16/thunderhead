@@ -136,6 +136,57 @@ class SetupScreen(Screen):
 
 
 class SetupApp(App):
+    CSS = """
+    Screen {
+        background: #0a0a0a;
+    }
+    Static, Label {
+        color: #c0c0c0;
+    }
+    .title {
+        text-style: bold;
+        color: #c0c0c0;
+        letter-spacing: 2;
+        text-style: uppercase;
+    }
+    .subtitle {
+        color: #555;
+    }
+    .field-label {
+        color: #666;
+        text-style: uppercase;
+        letter-spacing: 1;
+        margin-bottom: 1;
+    }
+    Input {
+        background: #0a0a0a;
+        color: #c0c0c0;
+        border: solid #222;
+    }
+    Input:focus {
+        border: solid #cc0000;
+    }
+    Button {
+        background: #cc0000;
+        color: #fff;
+        border: none;
+        text-style: bold;
+        letter-spacing: 2;
+    }
+    Button:hover {
+        background: #ff1a1a;
+    }
+    .status {
+        color: #666;
+    }
+    .spacer {
+        height: 1;
+    }
+    .form {
+        align: center middle;
+    }
+    """
+
     SCREENS = {"setup": SetupScreen}
 
     def on_mount(self):

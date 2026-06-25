@@ -2,11 +2,11 @@
 {% block content %}
 <div class="files-page">
     <div class="files-header">
-        <h2>📁 File Manager</h2>
+        <h2>File Manager</h2>
         <div class="files-actions">
             <button id="new-folder-btn" class="btn">+ New Folder</button>
             <label class="btn btn-primary" id="upload-btn">
-                Upload Files
+                Upload
                 <input type="file" id="file-input" multiple hidden>
             </label>
         </div>
@@ -24,7 +24,7 @@
                 <th class="col-name">Name</th>
                 <th class="col-size">Size</th>
                 <th class="col-date">Modified</th>
-                <th class="col-actions">Actions</th>
+                <th class="col-actions"></th>
             </tr>
         </thead>
         <tbody id="file-list">
